@@ -1,0 +1,26 @@
+name: Update Processed Leads
+on:
+  workflow_dispatch:
+    inputs:
+      business_name:
+        description: 'Business Name'
+        required: true
+      demo_url:
+        description: 'Demo URL'
+        required: true
+jobs:
+  update-file:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Append Lead
+        run: |
+          jq --arg name "${{ github.event.inputs.business_name }}" \
+             --arg url "${{ github.event.inputs.demo_url }}" \
+             '. += [{"name": $name, "demo_url": $url, "date": now | todate}]' \
+             processed_leads.json > tmp.json && mv tmp.json processed_leads.json
+      - name: Commit and Push
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Add processed lead: ${{ github.event.inputs.business_name }}"
+          file_pattern: processed_leads.json
